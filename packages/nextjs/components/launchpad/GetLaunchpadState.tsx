@@ -92,36 +92,19 @@ const HandleState = (params: {
 }) => {
   const saleStartTimeDate = new Date(Number(params.saleStart) * 1000);
   const saleEndTimeDate = new Date(Number(params.saleEnd) * 1000);
+  const vestingStartTimeDate = new Date(Number(params.vestingStart) * 1000);
+  const vestingEndTimeDate = new Date(Number(params.vestingEnd) * 1000);
 
   if (saleStartTimeDate > new Date()) return <SaleNotStarted saleStartTimeDate={saleStartTimeDate} />;
-  if (saleEndTimeDate < new Date()) return <SaleEnded saleEndTimeDate={saleEndTimeDate} />;
+  if (saleEndTimeDate < new Date())
+    return (
+      <SaleEnded
+        saleEndTimeDate={saleEndTimeDate}
+        vestingStartTimeDate={vestingStartTimeDate}
+        vestingEndTimeDate={vestingEndTimeDate}
+      />
+    );
   return <SaleLive totalAmount={params.totalAmount} ratio={params.ratio} />;
-};
-
-const SaleNotStarted = (params: { saleStartTimeDate: Date }) => {
-  return (
-    <div className="card w-96 bg-base-100 shadow-xl">
-      <div className="card-body">
-        <h2 className="card-title">Sale not started</h2>
-        <p>Sale will start on {params.saleStartTimeDate.toLocaleString()}</p>
-      </div>
-    </div>
-  );
-};
-
-const SaleEnded = (params: { saleEndTimeDate: Date }) => {
-  return (
-    <>
-      <div className="card w-96 bg-base-100 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title">Sale ended</h2>
-          <p>Sale ended on {params.saleEndTimeDate.toLocaleString()}</p>
-        </div>
-      </div>
-      {/* todo Vesting information component */}
-      {/* todo Claim component */}
-    </>
-  );
 };
 
 const SaleLive = (params: { totalAmount: bigint; ratio: bigint }) => {
@@ -178,18 +161,81 @@ const Buy = (params: { ratio: bigint }) => {
           onClick={() => write?.()}
           // onClick={() => write?.({ value: parseEther((desiredTokens / params.ratio).toString()) })}
         >
-          {isLoading ? "Loading..." : "Bet"}
+          {isLoading ? "Loading..." : "Buy"}
         </button>
       </div>
 
       {isSuccess && (
         <div>
-          Successfully minted your NFT!
+          Success!
           <div>
             <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`}>Etherscan</a>
           </div>
         </div>
       )}
     </>
+  );
+};
+
+const SaleEnded = (params: { saleEndTimeDate: Date; vestingStartTimeDate: Date; vestingEndTimeDate: Date }) => {
+  return (
+    <>
+      <div className="card w-96 bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="card-title">Sale ended</h2>
+          <p>Sale ended on {params.saleEndTimeDate.toLocaleString()}</p>
+        </div>
+      </div>
+      {/* todo Vesting information component */}
+      {/* todo Claim condition ? */}
+      <Claim />
+    </>
+  );
+};
+
+const Claim = () => {
+  const { config } = usePrepareContractWrite({
+    address: launchpad_address,
+    abi: launchpadJson.abi as Abi,
+    functionName: "claim",
+  });
+
+  const { data, write } = useContractWrite(config);
+
+  const { isLoading, isSuccess } = useWaitForTransaction({
+    hash: data?.hash,
+  });
+
+  return (
+    <div className="card w-96 bg-base-100 shadow-xl">
+      <div className="card-body">
+        <h2 className="card-title">Card title!</h2>
+        <p>If a dog chews shoes whose shoes does he choose?</p>
+        <div className="card-actions justify-end">
+          <button className="btn" disabled={!write || isLoading} onClick={() => write?.()}>
+            {isLoading ? "Loading..." : "Claim"}
+          </button>
+        </div>
+        {isSuccess && (
+          <div>
+            Success!
+            <div>
+              <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`}>Etherscan</a>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const SaleNotStarted = (params: { saleStartTimeDate: Date }) => {
+  return (
+    <div className="card w-96 bg-base-100 shadow-xl">
+      <div className="card-body">
+        <h2 className="card-title">Sale not started</h2>
+        <p>Sale will start on {params.saleStartTimeDate.toLocaleString()}</p>
+      </div>
+    </div>
   );
 };
