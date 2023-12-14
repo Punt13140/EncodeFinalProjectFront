@@ -169,7 +169,7 @@ export const LaunchpadFactory = () => {
               onChange={e => setVestingEnd(e.target.value.replace(/[^0-9]/g, ""))}
             />
           </div>
-          <button className="btn btn-active btn-neutral" disabled={!write || isLoading}>
+          <button className="btn float-right" disabled={!write || isLoading}>
             {isLoading ? "Creating..." : "Create"}
           </button>
         </form>
@@ -184,9 +184,11 @@ export const LaunchpadFactory = () => {
         )}
         {waitForTransaction.isSuccess && (
           <p>
-            <Link href={`/launchpad/${lastCreatedLaunchpad}`} target="_blank">
-              Go to Launchpad
-            </Link>
+            <button className="btn float-right">
+              <Link href={`/launchpad/${lastCreatedLaunchpad}`} target="_blank">
+                Go to Launchpad
+              </Link>
+            </button>
           </p>
         )}
       </div>

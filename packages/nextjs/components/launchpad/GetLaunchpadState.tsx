@@ -1,7 +1,14 @@
 import { useState } from "react";
 import * as launchpadJson from "../assets/Launchpad.json";
 import { Abi, formatUnits, parseEther } from "viem";
-import { useAccount, useContractReads, useContractWrite, usePrepareContractWrite, useWaitForTransaction } from "wagmi";
+import {
+  useAccount,
+  useContractRead,
+  useContractReads,
+  useContractWrite,
+  usePrepareContractWrite,
+  useWaitForTransaction,
+} from "wagmi";
 
 export const GetLaunchpadState = (params: { contract_address: `0x${string}` }) => {
   const launchpadContract = {
@@ -134,11 +141,7 @@ const Buy = (params: { ratio: bigint; contract_address: `0x${string}` }) => {
     functionName: "buy",
     value: parseEther((desiredTokens / ratio).toString()),
   });
-  const { data, write } = useContractWrite(config);
-
-  const { isLoading, isSuccess } = useWaitForTransaction({
-    hash: data?.hash,
-  });
+  const { data, write, isLoading, isSuccess } = useContractWrite(config);
 
   if (!address) return <p>You are not connected</p>;
 
@@ -159,24 +162,17 @@ const Buy = (params: { ratio: bigint; contract_address: `0x${string}` }) => {
       <p>Price: {desiredTokens / ratio}</p>
 
       <div className="card-actions justify-end">
-        <button
-          className="btn"
-          disabled={!write || isLoading}
-          onClick={() => write?.()}
-          // onClick={() => write?.({ value: parseEther((desiredTokens / params.ratio).toString()) })}
-        >
+        <button className="btn float-right" disabled={!write || isLoading} onClick={() => write?.()}>
           {isLoading ? "Loading..." : "Buy"}
         </button>
       </div>
 
       {isSuccess && (
         <div>
-          Success!
-          <div>
-            <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`} target="_blank" rel="noreferrer">
-              Etherscan
-            </a>
-          </div>
+          <p>Submitted transaction:</p>
+          <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`} target="_blank" rel="noreferrer">
+            Etherscan
+          </a>
         </div>
       )}
     </>
@@ -190,17 +186,18 @@ const SaleEnded = (params: {
   contract_address: `0x${string}`;
 }) => {
   return (
-    <>
-      <div className="card w-96 bg-base-100 shadow-xl">
+    <div>
+      <div className="card w-96 bg-base-300 shadow-xl">
         <div className="card-body">
-          <h2 className="card-title">Sale ended</h2>
+          <h2 className="card-title">Sale Ended</h2>
           <p>Sale ended on {params.saleEndTimeDate.toLocaleString()}</p>
         </div>
       </div>
       {/* todo Vesting information component */}
       {/* todo Claim condition ? */}
       <Claim contract_address={params.contract_address} />
-    </>
+      <OwnerWithdraw contract_address={params.contract_address} />
+    </div>
   );
 };
 
@@ -218,10 +215,9 @@ const Claim = (params: { contract_address: `0x${string}` }) => {
   });
 
   return (
-    <div className="card w-96 bg-base-100 shadow-xl">
+    <div className="card w-96 bg-base-300 shadow-xl mt-5">
       <div className="card-body">
-        <h2 className="card-title">Card title!</h2>
-        <p>If a dog chews shoes whose shoes does he choose?</p>
+        <h2 className="card-title">Claim Tokens</h2>
         <div className="card-actions justify-end">
           <button className="btn" disabled={!write || isLoading} onClick={() => write?.()}>
             {isLoading ? "Loading..." : "Claim"}
@@ -229,10 +225,10 @@ const Claim = (params: { contract_address: `0x${string}` }) => {
         </div>
         {isSuccess && (
           <div>
-            Success!
-            <div>
-              <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`}>Etherscan</a>
-            </div>
+            <p>Submitted transaction:</p>
+            <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`} target="_blank" rel="noreferrer">
+              Etherscan
+            </a>
           </div>
         )}
       </div>
@@ -242,10 +238,59 @@ const Claim = (params: { contract_address: `0x${string}` }) => {
 
 const SaleNotStarted = (params: { saleStartTimeDate: Date }) => {
   return (
-    <div className="card w-96 bg-base-100 shadow-xl">
+    <div className="card w-96 bg-base-300 shadow-xl">
       <div className="card-body">
-        <h2 className="card-title">Sale not started</h2>
+        <h2 className="card-title">Sale Not Started</h2>
         <p>Sale will start on {params.saleStartTimeDate.toLocaleString()}</p>
+      </div>
+    </div>
+  );
+};
+
+const OwnerWithdraw = (params: { contract_address: `0x${string}` }) => {
+  const { address } = useAccount();
+  const [owner, setOwner] = useState("");
+
+  useContractRead({
+    address: params.contract_address,
+    abi: launchpadJson.abi,
+    functionName: "owner",
+    async onSuccess(data: string) {
+      setOwner(data);
+    },
+  });
+
+  const { config, error, isError } = usePrepareContractWrite({
+    address: params.contract_address,
+    abi: launchpadJson.abi,
+    functionName: "withdraw",
+  });
+  const { data, write, isLoading, isSuccess } = useContractWrite(config);
+
+  if (isError) {
+    console.log(error?.message);
+  }
+
+  return (
+    <div className="card bg-base-300 shadow-xl mt-5">
+      <div className="card-body">
+        <h2 className="card-title">Owner Withdraw {}</h2>
+        {owner === address && (
+          <div>
+            <button className="btn float-right" disabled={!write || isLoading} onClick={() => write?.()}>
+              {isLoading ? "Withdrawing..." : "Withdraw"}
+            </button>
+            {isSuccess && (
+              <div>
+                <p>Submitted transaction:</p>
+                <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`} target="_blank" rel="noreferrer">
+                  Etherscan
+                </a>
+              </div>
+            )}
+          </div>
+        )}
+        {owner !== address && <p>You are not the owner of the launchpad!</p>}
       </div>
     </div>
   );
