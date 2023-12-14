@@ -33,7 +33,7 @@ export const LaunchpadFactory = () => {
       saleEnd,
       vestingStart,
       vestingEnd,
-      parseUnits(ratio, 18),
+      ratio,
     ],
   });
 
@@ -52,7 +52,7 @@ export const LaunchpadFactory = () => {
 
   if (!address)
     return (
-      <div className="card w-96 bg-base-100 shadow-xl">
+      <div className="card w-96 bg-base-300 shadow-xl">
         <div className="card-body">
           <p>{isConnecting ? "Connecting to your wallet..." : "Please connect to your wallet"}</p>
         </div>
@@ -64,7 +64,7 @@ export const LaunchpadFactory = () => {
   }
 
   return (
-    <div className="card lg:card-side bg-base-300 shadow-xl mb-4">
+    <div className="card w-96 bg-base-300 shadow-xl mb-4">
       <div className="card-body">
         <h2 className="card-title">Create Launchpad {}</h2>
         <form
@@ -172,23 +172,23 @@ export const LaunchpadFactory = () => {
           <button className="btn btn-active btn-neutral" disabled={!write || isLoading}>
             {isLoading ? "Creating..." : "Create"}
           </button>
-          {isError && <p>Invalid parameters, check console for more information</p>}
-          {isSuccess && (
-            <div>
-              <p>Submitted transaction:</p>
-              <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`} target="_blank" rel="noreferrer">
-                Etherscan
-              </a>
-            </div>
-          )}
-          {waitForTransaction.isSuccess && (
-            <p>
-              <Link href={`/launchpad/${lastCreatedLaunchpad}`} target="_blank">
-                Go to Launchpad
-              </Link>
-            </p>
-          )}
         </form>
+        {isError && <p>Invalid parameters, check console for more information</p>}
+        {isSuccess && (
+          <div>
+            <p>Submitted transaction:</p>
+            <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`} target="_blank" rel="noreferrer">
+              Etherscan
+            </a>
+          </div>
+        )}
+        {waitForTransaction.isSuccess && (
+          <p>
+            <Link href={`/launchpad/${lastCreatedLaunchpad}`} target="_blank">
+              Go to Launchpad
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   );

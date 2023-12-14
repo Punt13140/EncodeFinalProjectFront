@@ -111,11 +111,11 @@ const HandleState = (params: {
 
 const SaleLive = (params: { totalAmount: bigint; ratio: bigint; contract_address: `0x${string}` }) => {
   return (
-    <div className="card w-96 bg-primary text-primary-content">
+    <div className="card w-96 bg-base-300 shadow-xl">
       <div className="card-body">
         <h2 className="card-title">Sale Live!!!</h2>
         <p>You can buy {formatUnits(params.totalAmount, 18)} Tokens.</p>
-        <p>Ratio: {formatUnits(params.ratio, 18)}</p>
+        <p>Ratio: {params.ratio.toString()}</p>
         <Buy ratio={params.ratio} contract_address={params.contract_address} />
       </div>
     </div>
@@ -126,7 +126,7 @@ const Buy = (params: { ratio: bigint; contract_address: `0x${string}` }) => {
   const { address } = useAccount();
 
   const [desiredTokens, setDesiredTokens] = useState<number>(3);
-  const ratio = parseInt(formatUnits(params.ratio, 18));
+  const ratio = Number(params.ratio);
 
   const { config, error } = usePrepareContractWrite({
     address: params.contract_address,
@@ -173,7 +173,9 @@ const Buy = (params: { ratio: bigint; contract_address: `0x${string}` }) => {
         <div>
           Success!
           <div>
-            <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`}>Etherscan</a>
+            <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`} target="_blank" rel="noreferrer">
+              Etherscan
+            </a>
           </div>
         </div>
       )}
