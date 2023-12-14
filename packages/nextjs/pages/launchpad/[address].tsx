@@ -1,8 +1,13 @@
+import { useRouter } from "next/router";
 import type { NextPage } from "next";
 import { MetaHeader } from "~~/components/MetaHeader";
-import { LaunchpadFactory } from "~~/components/launchpadfactory/LauchpadFactory";
+import { CheckWalletConnected } from "~~/components/launchpad/CheckWalletConnected";
 
-const Home: NextPage = () => {
+const Launchpad: NextPage = () => {
+  const router = useRouter();
+  const { address } = router.query;
+  const contract_address = address as `0x${string}`;
+
   return (
     <>
       <MetaHeader />
@@ -16,7 +21,7 @@ const Home: NextPage = () => {
 
         <div className="flex-grow bg-base-300 w-full mt-16 px-8 py-12">
           <div className="flex justify-center items-center gap-12 flex-col sm:flex-row">
-            <LaunchpadFactory />
+            <CheckWalletConnected contract_address={contract_address} />
           </div>
         </div>
       </div>
@@ -24,4 +29,4 @@ const Home: NextPage = () => {
   );
 };
 
-export default Home;
+export default Launchpad;

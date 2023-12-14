@@ -1,10 +1,10 @@
 import { GetLaunchpadState } from "./GetLaunchpadState";
 import { useAccount } from "wagmi";
 
-export const CheckWalletConnected = () => {
+export const CheckWalletConnected = (params: { contract_address: `0x${string}` }) => {
   const { address, isConnecting } = useAccount();
 
-  if (address) return <GetLaunchpadState />;
+  if (address) return <GetLaunchpadState contract_address={params.contract_address} />;
 
   const message = isConnecting ? "Connecting to your wallet..." : "Please connect to your wallet";
 

@@ -1,15 +1,14 @@
 import { useState } from "react";
 import * as launchpadJson from "../assets/Launchpad.json";
-import { Abi, formatUnits } from "viem";
+import { Abi, formatUnits, parseEther } from "viem";
 import { useAccount, useContractReads, useContractWrite, usePrepareContractWrite, useWaitForTransaction } from "wagmi";
 
-const launchpad_address = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
-const launchpadContract = {
-  address: launchpad_address,
-  abi: launchpadJson.abi as Abi,
-};
+export const GetLaunchpadState = (params: { contract_address: `0x${string}` }) => {
+  const launchpadContract = {
+    address: params.contract_address,
+    abi: launchpadJson.abi as Abi,
+  };
 
-export const GetLaunchpadState = () => {
   const { data, isError, isLoading } = useContractReads({
     contracts: [
       {
@@ -75,9 +74,10 @@ export const GetLaunchpadState = () => {
       saleStart={data![0].result as bigint}
       saleEnd={data![1].result as bigint}
       totalAmount={data![2].result as bigint}
-      ratio={data![2].result as bigint}
-      vestingStart={data![2].result as bigint}
-      vestingEnd={data![2].result as bigint}
+      ratio={data![3].result as bigint}
+      vestingStart={data![4].result as bigint}
+      vestingEnd={data![5].result as bigint}
+      contract_address={params.contract_address}
     />
   );
 };
@@ -89,6 +89,7 @@ const HandleState = (params: {
   ratio: bigint;
   vestingStart: bigint;
   vestingEnd: bigint;
+  contract_address: `0x${string}`;
 }) => {
   const saleStartTimeDate = new Date(Number(params.saleStart) * 1000);
   const saleEndTimeDate = new Date(Number(params.saleEnd) * 1000);
@@ -102,33 +103,36 @@ const HandleState = (params: {
         saleEndTimeDate={saleEndTimeDate}
         vestingStartTimeDate={vestingStartTimeDate}
         vestingEndTimeDate={vestingEndTimeDate}
+        contract_address={params.contract_address}
       />
     );
-  return <SaleLive totalAmount={params.totalAmount} ratio={params.ratio} />;
+  return <SaleLive totalAmount={params.totalAmount} ratio={params.ratio} contract_address={params.contract_address} />;
 };
 
-const SaleLive = (params: { totalAmount: bigint; ratio: bigint }) => {
+const SaleLive = (params: { totalAmount: bigint; ratio: bigint; contract_address: `0x${string}` }) => {
   return (
     <div className="card w-96 bg-primary text-primary-content">
       <div className="card-body">
         <h2 className="card-title">Sale Live!!!</h2>
         <p>You can buy {formatUnits(params.totalAmount, 18)} Tokens.</p>
         <p>Ratio: {formatUnits(params.ratio, 18)}</p>
-        <Buy ratio={params.ratio} />
+        <Buy ratio={params.ratio} contract_address={params.contract_address} />
       </div>
     </div>
   );
 };
 
-const Buy = (params: { ratio: bigint }) => {
+const Buy = (params: { ratio: bigint; contract_address: `0x${string}` }) => {
   const { address } = useAccount();
 
   const [desiredTokens, setDesiredTokens] = useState<number>(3);
+  const ratio = parseInt(formatUnits(params.ratio, 18));
 
   const { config, error } = usePrepareContractWrite({
-    address: launchpad_address,
+    address: params.contract_address,
     abi: launchpadJson.abi as Abi,
     functionName: "buy",
+    value: parseEther((desiredTokens / ratio).toString()),
   });
   const { data, write } = useContractWrite(config);
 
@@ -152,7 +156,7 @@ const Buy = (params: { ratio: bigint }) => {
         onChange={e => setDesiredTokens(parseInt(e.target.value.replace(/\D/, "")) || 0)}
       />
 
-      <p>Price: {formatUnits(params.ratio * BigInt(desiredTokens || 0), 18)}</p>
+      <p>Price: {desiredTokens / ratio}</p>
 
       <div className="card-actions justify-end">
         <button
@@ -177,7 +181,12 @@ const Buy = (params: { ratio: bigint }) => {
   );
 };
 
-const SaleEnded = (params: { saleEndTimeDate: Date; vestingStartTimeDate: Date; vestingEndTimeDate: Date }) => {
+const SaleEnded = (params: {
+  saleEndTimeDate: Date;
+  vestingStartTimeDate: Date;
+  vestingEndTimeDate: Date;
+  contract_address: `0x${string}`;
+}) => {
   return (
     <>
       <div className="card w-96 bg-base-100 shadow-xl">
@@ -188,14 +197,14 @@ const SaleEnded = (params: { saleEndTimeDate: Date; vestingStartTimeDate: Date; 
       </div>
       {/* todo Vesting information component */}
       {/* todo Claim condition ? */}
-      <Claim />
+      <Claim contract_address={params.contract_address} />
     </>
   );
 };
 
-const Claim = () => {
+const Claim = (params: { contract_address: `0x${string}` }) => {
   const { config } = usePrepareContractWrite({
-    address: launchpad_address,
+    address: params.contract_address,
     abi: launchpadJson.abi as Abi,
     functionName: "claim",
   });
